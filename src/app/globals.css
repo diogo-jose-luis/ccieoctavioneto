@@ -93,11 +93,11 @@ button {
 }
 
 .rise-up {
-  animation: rise-up 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: rise-up 1.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .rise-up-form {
-  animation: rise-up 0.75s cubic-bezier(0.16, 1, 0.3, 1) 0.32s both;
+  animation: rise-up 1.45s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
 }
 
 @media (prefers-reduced-motion: reduce) {
