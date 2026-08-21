@@ -10,7 +10,7 @@ export async function GET() {
   }
 
   const buffer = await readSpreadsheetBuffer();
-  return new NextResponse(new Uint8Array(buffer), {
+  return new NextResponse(buffer, {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

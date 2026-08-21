@@ -55,7 +55,7 @@ async function loadWorkbook() {
   }
 
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(Buffer.from(await response.arrayBuffer()));
+  await workbook.xlsx.load(await response.arrayBuffer());
 
   const sheet = workbook.worksheets[0] ?? workbook.addWorksheet("Inscritos");
   const first = cellText(sheet.getRow(1).getCell(COL.email).value).toLowerCase();
@@ -84,7 +84,8 @@ function readRows(sheet: ExcelJS.Worksheet): SheetRow[] {
 }
 
 async function saveWorkbook(workbook: ExcelJS.Workbook) {
-  const bytes = new Uint8Array(await workbook.xlsx.writeBuffer());
+  const buffer = await workbook.xlsx.writeBuffer();
+  const bytes = new Uint8Array(buffer);
   const attempts: RequestInit[] = [
     {
       method: "PUT",
@@ -159,5 +160,5 @@ export async function readSpreadsheetBuffer() {
   if (!response.ok) {
     throw new Error(`Não foi possível descarregar o Excel remoto (HTTP ${response.status})`);
   }
-  return Buffer.from(await response.arrayBuffer());
+  return new Uint8Array(await response.arrayBuffer());
 }
