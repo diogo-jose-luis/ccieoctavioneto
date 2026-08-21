@@ -74,11 +74,11 @@ export default function Landing() {
             </div>
           </header>
 
-          <div className="relative my-3 min-h-0 lg:hidden shorter:hidden">
+          <div className="relative my-3 min-h-0 lg:hidden shorter:hidden rise-up">
             <ProfileTabs compact />
           </div>
 
-          <div className="relative fade-up" style={{ animationDelay: "80ms" }}>
+          <div className="relative rise-up-form">
             <div className="mb-3 lg:hidden shorter:hidden">
               <Countdown />
             </div>
@@ -102,7 +102,7 @@ export default function Landing() {
             CCIE #70243
           </div>
 
-          <div className="absolute right-0 bottom-0 left-0 p-6 xl:p-8">
+          <div className="absolute right-0 bottom-0 left-0 p-6 xl:p-8 rise-up">
             <ProfileTabs />
           </div>
         </section>
