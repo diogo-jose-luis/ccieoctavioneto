@@ -88,10 +88,8 @@ export default function RegistrationForm() {
   }
 
   function goToWhatsapp() {
-    const text = encodeURIComponent(
-      `Olá Octávio, sou ${values.name}. Acabei de confirmar a inscrição na live de Infraestrutura de Rede (28–30 de Setembro, 19h–22h).`,
-    );
-    window.location.href = `https://wa.me/244928197191?text=${text}`;
+    window.location.href =
+      "https://chat.whatsapp.com/JIrDHf9TM948ayPET3D9Pc?s=sw&p=a&ilr=0";
   }
 
   const fields = [
@@ -281,7 +279,7 @@ function DuplicateModal({
           onClick={onWhatsapp}
           className="mt-2 h-10 w-full text-sm text-mist transition hover:text-white"
         >
-          Falar no WhatsApp
+          Entrar no grupo do WhatsApp
         </button>
       </div>
     </div>
@@ -332,7 +330,7 @@ function ConfirmationModal({
           onClick={onConfirm}
           className="btn-shine relative mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-cyan text-sm font-semibold text-ink transition hover:bg-cyan/90"
         >
-          Entendido, abrir WhatsApp
+          Entendido, entrar no grupo
           <ArrowRight className="size-4" />
         </button>
       </div>
