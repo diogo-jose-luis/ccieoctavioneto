@@ -47,6 +47,11 @@ function isDuplicateResponse(status: number, body: UnknownRecord) {
   ) || blob.includes("already") || blob.includes("duplicate") || blob.includes("existe");
 }
 
+function errorMessage(body: UnknownRecord, fallback: string) {
+  const message = body.message;
+  return typeof message === "string" && message.trim() ? message : fallback;
+}
+
 async function fetchJson(url: string, init?: RequestInit) {
   const response = await fetch(url, {
     ...init,
@@ -75,7 +80,9 @@ export async function listInscritos(): Promise<SheetRow[]> {
   do {
     const { response, body } = await fetchJson(`${API_BASE}/listar?page=${page}`);
     if (!response.ok) {
-      throw new Error(body.message || `Falha ao listar inscrições (HTTP ${response.status})`);
+      throw new Error(
+        errorMessage(body, `Falha ao listar inscrições (HTTP ${response.status})`),
+      );
     }
     const items = Array.isArray(body.inscritos)
       ? body.inscritos
@@ -117,7 +124,9 @@ export async function registerInscrito(input: {
   }
 
   if (!response.ok) {
-    throw new Error(body.message || `Falha ao registar inscrição (HTTP ${response.status})`);
+    throw new Error(
+      errorMessage(body, `Falha ao registar inscrição (HTTP ${response.status})`),
+    );
   }
 
   return {
