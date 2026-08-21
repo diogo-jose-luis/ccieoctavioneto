@@ -2,7 +2,6 @@ export type { SheetRow } from "@/lib/types";
 export { formatLuandaDate } from "@/lib/sheet-date";
 export {
   listInscritos,
-  readSpreadsheetBuffer,
+  readInscritosText,
   registerInscrito,
-  REMOTE_XLSX_URL,
-} from "@/lib/remote-xlsx";
+} from "@/lib/inscricao-api";

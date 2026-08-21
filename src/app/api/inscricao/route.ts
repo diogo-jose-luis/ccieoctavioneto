@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       );
     }
   } catch (error) {
-    console.error("Falha ao gravar a planilha", error);
+    console.error("Falha ao gravar a inscrição", error);
     return NextResponse.json(
       { ok: false, message: "Não foi possível gravar a inscrição. Tente novamente." },
       { status: 500 },

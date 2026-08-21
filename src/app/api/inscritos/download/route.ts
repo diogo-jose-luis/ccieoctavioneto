@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthed } from "@/lib/admin-auth";
-import { readSpreadsheetBuffer } from "@/lib/sheet";
+import { readInscritosText } from "@/lib/sheet";
 
 export const runtime = "nodejs";
 
@@ -9,12 +9,11 @@ export async function GET() {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
-  const buffer = await readSpreadsheetBuffer();
-  return new NextResponse(buffer, {
+  const content = await readInscritosText();
+  return new NextResponse(content, {
     headers: {
-      "Content-Type":
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": 'attachment; filename="ccie-octavio.xlsx"',
+      "Content-Type": "text/plain; charset=utf-8",
+      "Content-Disposition": 'attachment; filename="inscritos-live-ccie.txt"',
       "Cache-Control": "no-store",
     },
   });

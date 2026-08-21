@@ -1,7 +1,9 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import Link from "next/link";
 import {
+  ArrowLeft,
   Download,
   Loader2,
   Lock,
@@ -74,12 +76,19 @@ export default function InscritosClient() {
       <div className="mx-auto max-w-5xl">
         <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div>
+            <Link
+              href="/"
+              className="mb-3 inline-flex items-center gap-2 text-sm text-mist transition hover:text-cyan"
+            >
+              <ArrowLeft className="size-4" />
+              Voltar à inscrição
+            </Link>
             <p className="text-[10px] font-semibold tracking-[0.22em] text-cyan uppercase">
               Área reservada
             </p>
             <h1 className="font-display text-3xl font-semibold">Inscritos da live</h1>
             <p className="mt-1 text-sm text-mist">
-              Lista no Excel remoto · visível apenas com password
+              Lista da API · visível apenas com password
             </p>
           </div>
           {status === "ready" ? (
@@ -97,7 +106,7 @@ export default function InscritosClient() {
                 className="inline-flex items-center gap-2 rounded-xl bg-cyan px-3 py-2 text-sm font-semibold text-ink"
               >
                 <Download className="size-4" />
-                Descarregar Excel
+                Descarregar TXT
               </a>
               <button
                 type="button"
