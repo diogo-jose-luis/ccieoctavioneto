@@ -22,10 +22,23 @@ const plexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
+function resolveSiteUrl() {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) return explicit;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "http://localhost:3000";
+}
+
+function resolveMetadataBase() {
+  try {
+    return new URL(resolveSiteUrl());
+  } catch {
+    return new URL("http://localhost:3000");
+  }
+}
+
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  ),
+  metadataBase: resolveMetadataBase(),
   title: "Infraestrutura de Rede Bancária | Octávio Neto · CCIE #70243",
   description:
     "Live de 3 noites com Octávio Neto, CCIE #70243: design e implementação da infraestrutura de rede para uma instituição bancária. 28–30 de Setembro, 19h–22h, no YouTube.",
