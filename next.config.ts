@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["exceljs", "nodemailer"],
+  serverExternalPackages: ["nodemailer", "exceljs"],
 };
 
 export default nextConfig;

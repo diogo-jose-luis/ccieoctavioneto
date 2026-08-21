@@ -79,7 +79,7 @@ export default function InscritosClient() {
             </p>
             <h1 className="font-display text-3xl font-semibold">Inscritos da live</h1>
             <p className="mt-1 text-sm text-mist">
-              Planilha automática · visível apenas com password
+              Lista no Excel remoto · visível apenas com password
             </p>
           </div>
           {status === "ready" ? (
@@ -126,7 +126,7 @@ export default function InscritosClient() {
               <Lock className="size-5" />
             </div>
             <h2 className="font-display text-center text-xl font-semibold">
-              Acesso à planilha
+              Acesso à lista
             </h2>
             <p className="mt-1 mb-4 text-center text-sm text-mist">
               Só o organizador consegue abrir esta lista.

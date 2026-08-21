@@ -14,7 +14,7 @@ export async function GET() {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": 'attachment; filename="inscritos-live-ccie.xlsx"',
+      "Content-Disposition": 'attachment; filename="ccie-octavio.xlsx"',
       "Cache-Control": "no-store",
     },
   });
