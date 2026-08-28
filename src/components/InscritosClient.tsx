@@ -1,9 +1,10 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  ChartLine,
   Download,
   Loader2,
   Lock,
@@ -12,6 +13,8 @@ import {
   Table2,
   Users,
 } from "lucide-react";
+import InscritosTrendChart from "@/components/InscritosTrendChart";
+import { dailyCountsLast31Days } from "@/lib/inscritos-chart";
 import type { SheetRow } from "@/lib/types";
 
 export default function InscritosClient() {
@@ -20,6 +23,12 @@ export default function InscritosClient() {
   const [error, setError] = useState("");
   const [rows, setRows] = useState<SheetRow[]>([]);
   const [busy, setBusy] = useState(false);
+  const [showChart, setShowChart] = useState(false);
+  const chartSectionId = useId();
+  const chartPoints = useMemo(
+    () => dailyCountsLast31Days(rows.map((row) => row.date)),
+    [rows],
+  );
 
   useEffect(() => {
     const previous = document.body.style.overflow;
@@ -95,6 +104,20 @@ export default function InscritosClient() {
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
+                onClick={() => setShowChart((open) => !open)}
+                aria-expanded={showChart}
+                aria-controls={chartSectionId}
+                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+                  showChart
+                    ? "border-cyan/40 bg-cyan/10 text-cyan"
+                    : "border-white/10 bg-white/5 text-white/90 hover:border-cyan/40"
+                }`}
+              >
+                <ChartLine className="size-4" />
+                {showChart ? "Ocultar gráfico" : "Gráfico"}
+              </button>
+              <button
+                type="button"
                 onClick={() => void loadRows()}
                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/90 hover:border-cyan/40"
               >
@@ -163,6 +186,10 @@ export default function InscritosClient() {
         ) : null}
 
         {status === "ready" ? (
+          <>
+          <div id={chartSectionId} hidden={!showChart}>
+            <InscritosTrendChart points={chartPoints} />
+          </div>
           <section className="glass hud-corners overflow-hidden rounded-2xl">
             <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
               <p className="flex items-center gap-2 text-sm text-mist">
@@ -204,6 +231,7 @@ export default function InscritosClient() {
               </table>
             </div>
           </section>
+          </>
         ) : null}
       </div>
     </main>
