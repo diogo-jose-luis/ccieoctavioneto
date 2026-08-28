@@ -58,6 +58,9 @@ export default function InscritosClient() {
   const [error, setError] = useState("");
   const [rows, setRows] = useState<SheetRow[]>([]);
   const [busy, setBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const processing = busy || refreshing || downloading;
   const [showChart, setShowChart] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number | "all">(DEFAULT_PAGE_SIZE);
@@ -91,15 +94,21 @@ export default function InscritosClient() {
     setPage((current) => Math.min(current, totalPages));
   }, [totalPages]);
 
-  async function loadRows() {
-    const response = await fetch("/api/inscritos", { cache: "no-store" });
-    if (response.status === 401) {
-      setStatus("login");
-      return;
+  async function loadRows(options?: { refresh?: boolean }) {
+    const isRefresh = options?.refresh === true;
+    if (isRefresh) setRefreshing(true);
+    try {
+      const response = await fetch("/api/inscritos", { cache: "no-store" });
+      if (response.status === 401) {
+        setStatus("login");
+        return;
+      }
+      const data = (await response.json()) as { rows?: SheetRow[] };
+      setRows(data.rows ?? []);
+      setStatus("ready");
+    } finally {
+      if (isRefresh) setRefreshing(false);
     }
-    const data = (await response.json()) as { rows?: SheetRow[] };
-    setRows(data.rows ?? []);
-    setStatus("ready");
   }
 
   useEffect(() => {
@@ -128,9 +137,33 @@ export default function InscritosClient() {
   }
 
   async function onLogout() {
-    await fetch("/api/inscritos", { method: "DELETE" });
-    setRows([]);
-    setStatus("login");
+    setBusy(true);
+    try {
+      await fetch("/api/inscritos", { method: "DELETE" });
+      setRows([]);
+      setStatus("login");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onDownloadExcel() {
+    setDownloading(true);
+    try {
+      const response = await fetch("/api/inscritos/download", { cache: "no-store" });
+      if (!response.ok) return;
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "inscritos-live-ccie.xlsx";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloading(false);
+    }
   }
 
   function onPageSizeChange(value: string) {
@@ -168,9 +201,10 @@ export default function InscritosClient() {
               <button
                 type="button"
                 onClick={() => setShowChart((open) => !open)}
+                disabled={processing}
                 aria-expanded={showChart}
                 aria-controls={chartSectionId}
-                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm ${
+                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm disabled:opacity-60 ${
                   showChart
                     ? "border-cyan/40 bg-cyan/10 text-cyan"
                     : "border-white/10 bg-white/5 text-white/90 hover:border-cyan/40"
@@ -181,25 +215,41 @@ export default function InscritosClient() {
               </button>
               <button
                 type="button"
-                onClick={() => void loadRows()}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/90 hover:border-cyan/40"
+                disabled={processing}
+                onClick={() => void loadRows({ refresh: true })}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/90 hover:border-cyan/40 disabled:opacity-60"
               >
-                <RefreshCw className="size-4" />
+                {refreshing ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="size-4" />
+                )}
                 Actualizar
               </button>
-              <a
-                href="/api/inscritos/download"
-                className="inline-flex items-center gap-2 rounded-xl bg-cyan px-3 py-2 text-sm font-semibold text-ink"
-              >
-                <FileSpreadsheet className="size-4" />
-                Descarregar Excel
-              </a>
               <button
                 type="button"
-                onClick={() => void onLogout()}
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm text-mist hover:text-white"
+                disabled={processing}
+                onClick={() => void onDownloadExcel()}
+                className="inline-flex items-center gap-2 rounded-xl bg-cyan px-3 py-2 text-sm font-semibold text-ink disabled:opacity-70"
               >
-                <LogOut className="size-4" />
+                {downloading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="size-4" />
+                )}
+                {downloading ? "A gerar Excel…" : "Descarregar Excel"}
+              </button>
+              <button
+                type="button"
+                disabled={processing}
+                onClick={() => void onLogout()}
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-3 py-2 text-sm text-mist hover:text-white disabled:opacity-60"
+              >
+                {busy && status === "ready" ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <LogOut className="size-4" />
+                )}
                 Sair
               </button>
             </div>
@@ -207,9 +257,10 @@ export default function InscritosClient() {
         </header>
 
         {status === "loading" ? (
-          <p className="flex items-center gap-2 text-mist">
-            <Loader2 className="size-4 animate-spin" /> A verificar acesso…
-          </p>
+          <div className="glass hud-corners mx-auto flex max-w-md flex-col items-center rounded-2xl px-6 py-12 text-mist">
+            <Loader2 className="size-8 animate-spin text-cyan" />
+            <p className="mt-3 text-sm">A verificar acesso…</p>
+          </div>
         ) : null}
 
         {status === "login" ? (
@@ -243,20 +294,32 @@ export default function InscritosClient() {
               disabled={busy}
               className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-cyan text-sm font-semibold text-ink disabled:opacity-70"
             >
-              {busy ? <Loader2 className="size-4 animate-spin" /> : "Entrar"}
+              {busy ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" /> A entrar…
+                </>
+              ) : (
+                "Entrar"
+              )}
             </button>
           </form>
         ) : null}
 
         {status === "ready" ? (
-          <>
-          <div>
-            <InscritosTrendChart
+          <div className="relative" aria-busy={refreshing || downloading}>
+          {refreshing || downloading ? (
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-ink/55 backdrop-blur-[2px]">
+              <p className="flex items-center gap-2 rounded-xl border border-cyan/25 bg-navy/90 px-4 py-3 text-sm text-cyan shadow-lg">
+                <Loader2 className="size-5 animate-spin" />
+                {downloading ? "A gerar Excel…" : "A actualizar…"}
+              </p>
+            </div>
+          ) : null}
+          <InscritosTrendChart
               points={chartPoints}
               showChart={showChart}
               chartId={chartSectionId}
             />
-          </div>
           <section className="glass hud-corners overflow-hidden rounded-2xl">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
               <p className="flex items-center gap-2 text-sm text-mist">
@@ -386,7 +449,7 @@ export default function InscritosClient() {
               </div>
             ) : null}
           </section>
-          </>
+          </div>
         ) : null}
       </div>
     </main>
