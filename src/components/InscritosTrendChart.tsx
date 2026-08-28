@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState, type PointerEvent } from "react";
-import { Activity } from "lucide-react";
+import { Activity, CalendarDays } from "lucide-react";
 import {
   INSCRITOS_CHART_DAYS,
   type DailyCount,
@@ -9,6 +9,8 @@ import {
 
 type Props = {
   points: DailyCount[];
+  showChart: boolean;
+  chartId: string;
 };
 
 const WIDTH = 800;
@@ -24,10 +26,11 @@ function niceMax(value: number) {
   return nice * magnitude;
 }
 
-export default function InscritosTrendChart({ points }: Props) {
+export default function InscritosTrendChart({ points, showChart, chartId }: Props) {
   const reactId = useId();
   const gradientId = `inscritos-fill-${reactId.replace(/:/g, "")}`;
   const [hover, setHover] = useState<number | null>(null);
+  const today = points.at(-1);
 
   const innerW = WIDTH - PAD.left - PAD.right;
   const innerH = HEIGHT - PAD.top - PAD.bottom;
@@ -79,24 +82,47 @@ export default function InscritosTrendChart({ points }: Props) {
 
   return (
     <section className="glass hud-corners mb-4 overflow-hidden rounded-2xl">
-      <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div>
           <p className="flex items-center gap-2 text-sm text-mist">
             <Activity className="size-4 text-cyan" />
-            Inscrições nos últimos {INSCRITOS_CHART_DAYS} dias
+            {showChart
+              ? `Inscrições nos últimos ${INSCRITOS_CHART_DAYS} dias`
+              : "Inscrições"}
           </p>
-          <p className="mt-1 text-xs text-mist/80">
-            {total} no período
-            {peak.count > 0 ? ` · pico ${peak.count} em ${peak.label}` : ""}
-          </p>
+          {showChart ? (
+            <p className="mt-1 text-xs text-mist/80">
+              {total} no período
+              {peak.count > 0 ? ` · pico ${peak.count} em ${peak.label}` : ""}
+            </p>
+          ) : null}
         </div>
-        {active ? (
-          <p className="rounded-lg border border-cyan/30 bg-cyan/10 px-3 py-1.5 font-mono text-xs text-cyan">
-            {active.label} · {active.count} inscrição{active.count === 1 ? "" : "ões"}
-          </p>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {showChart && active ? (
+            <p className="rounded-lg border border-cyan/30 bg-cyan/10 px-3 py-1.5 font-mono text-xs text-cyan">
+              {active.label} · {active.count} inscrição{active.count === 1 ? "" : "ões"}
+            </p>
+          ) : null}
+          <div className="inline-flex items-center gap-3 rounded-xl border border-cyan/25 bg-cyan/10 px-3 py-2">
+            <div className="flex size-9 items-center justify-center rounded-lg bg-cyan/15 text-cyan">
+              <CalendarDays className="size-4" />
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold tracking-[0.18em] text-cyan uppercase">
+                Hoje{today?.label ? ` · ${today.label}` : ""}
+              </p>
+              <p className="font-display text-xl leading-none font-semibold">
+                {today?.count ?? 0}{" "}
+                <span className="text-xs font-normal text-mist">
+                  inscrição{(today?.count ?? 0) === 1 ? "" : "ões"}
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="px-2 py-3 sm:px-4">
+      <div id={chartId} hidden={!showChart}>
+      <div className="border-t border-white/10 px-2 py-3 sm:px-4">
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           className="h-[220px] w-full"
@@ -179,6 +205,7 @@ export default function InscritosTrendChart({ points }: Props) {
             );
           })}
         </svg>
+      </div>
       </div>
     </section>
   );

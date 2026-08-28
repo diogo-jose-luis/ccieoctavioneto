@@ -250,8 +250,12 @@ export default function InscritosClient() {
 
         {status === "ready" ? (
           <>
-          <div id={chartSectionId} hidden={!showChart}>
-            <InscritosTrendChart points={chartPoints} />
+          <div>
+            <InscritosTrendChart
+              points={chartPoints}
+              showChart={showChart}
+              chartId={chartSectionId}
+            />
           </div>
           <section className="glass hud-corners overflow-hidden rounded-2xl">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
