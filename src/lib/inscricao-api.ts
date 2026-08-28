@@ -1,5 +1,5 @@
 import type { SheetRow } from "@/lib/types";
-import { formatLuandaDate } from "@/lib/sheet-date";
+import { formatLuandaDate, sortInscritosNewestFirst } from "@/lib/sheet-date";
 
 const API_BASE =
   process.env.INSCRICAO_API_BASE?.trim() ||
@@ -94,10 +94,11 @@ export async function listInscritos(): Promise<SheetRow[]> {
     page += 1;
   } while (page <= lastPage);
 
-  return collected
-    .map((item, index) => toRow(item, index))
-    .filter((row) => row.email)
-    .reverse();
+  return sortInscritosNewestFirst(
+    collected
+      .map((item, index) => toRow(item, index))
+      .filter((row) => row.email),
+  );
 }
 
 export async function registerInscrito(input: {
@@ -134,13 +135,4 @@ export async function registerInscrito(input: {
     n: existing.length + 1,
     date: formatLuandaDate(),
   };
-}
-
-export async function readInscritosText() {
-  const rows = [...(await listInscritos())].reverse();
-  const header = "N.º\tData / Hora\tNome\tE-mail\tTelefone";
-  const body = rows
-    .map((row) => `${row.n}\t${row.date}\t${row.name}\t${row.email}\t${row.phone}`)
-    .join("\n");
-  return `${header}\n${body}${body ? "\n" : ""}`;
 }

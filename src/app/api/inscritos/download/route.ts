@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthed } from "@/lib/admin-auth";
-import { readInscritosText } from "@/lib/sheet";
+import { buildInscritosExcel } from "@/lib/sheet";
 
 export const runtime = "nodejs";
 
@@ -9,11 +9,12 @@ export async function GET() {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
-  const content = await readInscritosText();
-  return new NextResponse(content, {
+  const buffer = await buildInscritosExcel();
+  return new NextResponse(Buffer.from(buffer), {
     headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="inscritos-live-ccie.txt"',
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Disposition": 'attachment; filename="inscritos-live-ccie.xlsx"',
       "Cache-Control": "no-store",
     },
   });
