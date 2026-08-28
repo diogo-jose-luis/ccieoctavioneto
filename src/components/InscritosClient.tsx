@@ -12,6 +12,7 @@ import {
   Lock,
   LogOut,
   RefreshCw,
+  Search,
   Table2,
   Users,
 } from "lucide-react";
@@ -22,6 +23,22 @@ import type { SheetRow } from "@/lib/types";
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200, 500] as const;
 const DEFAULT_PAGE_SIZE = 100;
+
+function normalizeSearch(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function rowMatchesQuery(row: SheetRow, query: string) {
+  const tokens = normalizeSearch(query).split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return true;
+  const haystack = normalizeSearch(
+    [row.n, row.date, row.name, row.email, row.phone].join(" "),
+  );
+  return tokens.every((token) => haystack.includes(token));
+}
 
 function pageItems(current: number, total: number) {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -44,17 +61,22 @@ export default function InscritosClient() {
   const [showChart, setShowChart] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<number | "all">(DEFAULT_PAGE_SIZE);
+  const [query, setQuery] = useState("");
   const chartSectionId = useId();
   const chartPoints = useMemo(
     () => dailyCountsLast31Days(rows.map((row) => row.date)),
     [rows],
   );
   const sortedRows = useMemo(() => sortInscritosNewestFirst(rows), [rows]);
-  const resolvedPageSize = pageSize === "all" ? Math.max(sortedRows.length, 1) : pageSize;
-  const totalPages = Math.max(1, Math.ceil(sortedRows.length / resolvedPageSize) || 1);
+  const filteredRows = useMemo(
+    () => sortedRows.filter((row) => rowMatchesQuery(row, query)),
+    [query, sortedRows],
+  );
+  const resolvedPageSize = pageSize === "all" ? Math.max(filteredRows.length, 1) : pageSize;
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / resolvedPageSize) || 1);
   const currentPage = Math.min(page, totalPages);
-  const pageStart = sortedRows.length === 0 ? 0 : (currentPage - 1) * resolvedPageSize;
-  const pageRows = sortedRows.slice(pageStart, pageStart + resolvedPageSize);
+  const pageStart = filteredRows.length === 0 ? 0 : (currentPage - 1) * resolvedPageSize;
+  const pageRows = filteredRows.slice(pageStart, pageStart + resolvedPageSize);
   const pageEnd = pageStart + pageRows.length;
 
   useEffect(() => {
@@ -113,6 +135,11 @@ export default function InscritosClient() {
 
   function onPageSizeChange(value: string) {
     setPageSize(value === "all" ? "all" : Number(value));
+    setPage(1);
+  }
+
+  function onQueryChange(value: string) {
+    setQuery(value);
     setPage(1);
   }
 
@@ -230,8 +257,23 @@ export default function InscritosClient() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
               <p className="flex items-center gap-2 text-sm text-mist">
                 <Users className="size-4 text-cyan" />
-                {sortedRows.length} inscrito{sortedRows.length === 1 ? "" : "s"}
+                {query.trim()
+                  ? `${filteredRows.length} de ${sortedRows.length} inscrito${sortedRows.length === 1 ? "" : "s"}`
+                  : `${sortedRows.length} inscrito${sortedRows.length === 1 ? "" : "s"}`}
               </p>
+              <div className="flex min-w-[16rem] flex-1 items-center gap-3 sm:max-w-md">
+                <label className="relative w-full">
+                  <span className="sr-only">Pesquisar na tabela</span>
+                  <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-mist" />
+                  <input
+                    type="search"
+                    value={query}
+                    onChange={(event) => onQueryChange(event.target.value)}
+                    placeholder="Pesquisar na tabela…"
+                    className="h-9 w-full rounded-lg border border-white/10 bg-white/[0.04] pr-3 pl-9 text-sm outline-none focus:border-cyan/70"
+                  />
+                </label>
+              </div>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 text-sm text-mist">
                   Por página
@@ -269,6 +311,12 @@ export default function InscritosClient() {
                         Ainda não há inscrições.
                       </td>
                     </tr>
+                  ) : filteredRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-10 text-center text-mist">
+                        Nenhum inscrito corresponde à pesquisa.
+                      </td>
+                    </tr>
                   ) : (
                     pageRows.map((row, offset) => {
                       const index = pageStart + offset + 1;
@@ -286,10 +334,10 @@ export default function InscritosClient() {
                 </tbody>
               </table>
             </div>
-            {sortedRows.length > 0 ? (
+            {filteredRows.length > 0 ? (
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3">
                 <p className="text-sm text-mist">
-                  A mostrar {pageStart + 1}–{pageEnd} de {sortedRows.length}
+                  A mostrar {pageStart + 1}–{pageEnd} de {filteredRows.length}
                 </p>
                 <div className="flex flex-wrap items-center gap-1">
                   <button
