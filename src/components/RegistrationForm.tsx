@@ -74,12 +74,19 @@ export default function RegistrationForm() {
         setDuplicate(true);
         return;
       }
+      const registeredDespiteEmail =
+        data.code === "EMAIL_NOT_SENT" ||
+        data.message ===
+          "A inscrição foi registada, mas o e-mail não foi enviado. Tente novamente ou contacte-nos.";
+      if (registeredDespiteEmail || (response.ok && data.ok)) {
+        setDone(true);
+        return;
+      }
       if (!response.ok || !data.ok) {
         if (data.errors) setErrors(data.errors);
         setFormError(data.message || "Não foi possível concluir a inscrição.");
         return;
       }
-      setDone(true);
     } catch {
       setFormError("Falha de ligação. Verifique a internet e tente novamente.");
     } finally {

@@ -52,14 +52,6 @@ export async function POST(request: Request) {
     await sendRegistrationEmails({ ...values, firstName, when });
   } catch (error) {
     console.error("Falha ao enviar e-mail", error);
-    return NextResponse.json(
-      {
-        ok: false,
-        message:
-          "A inscrição foi registada, mas o e-mail não foi enviado. Tente novamente ou contacte-nos.",
-      },
-      { status: 502 },
-    );
   }
 
   return NextResponse.json({ ok: true, firstName });
