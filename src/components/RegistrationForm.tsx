@@ -96,7 +96,7 @@ export default function RegistrationForm() {
 
   function goToWhatsapp() {
     window.location.href =
-      "https://chat.whatsapp.com/JIrDHf9TM948ayPET3D9Pc?s=sw&p=a&ilr=0";
+      "https://chat.whatsapp.com/DeG5opjYV0PEQ0FQ4srVK4?s=cl&p=a&ilr=0";
   }
 
   const fields = [
