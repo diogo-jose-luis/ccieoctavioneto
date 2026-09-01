@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendRegistrationEmails } from "@/lib/mail";
 import { formatLuandaDate, registerInscrito } from "@/lib/sheet";
+import { toInscricaoDebug } from "@/lib/inscricao-api";
 import {
   firstNameOf,
   hasErrors,
@@ -41,9 +42,14 @@ export async function POST(request: Request) {
       );
     }
   } catch (error) {
-    console.error("Falha ao gravar a inscrição", error);
+    const debug = toInscricaoDebug(error);
+    console.error("Falha ao gravar a inscrição", debug, error);
     return NextResponse.json(
-      { ok: false, message: "Não foi possível gravar a inscrição. Tente novamente." },
+      {
+        ok: false,
+        message: "Não foi possível gravar a inscrição. Tente novamente.",
+        debug,
+      },
       { status: 500 },
     );
   }

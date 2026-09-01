@@ -7,6 +7,52 @@ const API_BASE =
 
 type UnknownRecord = Record<string, unknown>;
 
+export type InscricaoDebug = {
+  step: string;
+  message: string;
+  status?: number;
+  url?: string;
+  body?: unknown;
+};
+
+class InscricaoApiError extends Error {
+  step: string;
+  status: number;
+  url: string;
+  body: unknown;
+
+  constructor(input: {
+    step: string;
+    message: string;
+    status?: number;
+    url?: string;
+    body?: unknown;
+  }) {
+    super(input.message);
+    this.name = "InscricaoApiError";
+    this.step = input.step;
+    this.status = input.status ?? 0;
+    this.url = input.url ?? "";
+    this.body = input.body ?? null;
+  }
+}
+
+export function toInscricaoDebug(error: unknown): InscricaoDebug {
+  if (error instanceof InscricaoApiError) {
+    return {
+      step: error.step,
+      message: error.message,
+      status: error.status || undefined,
+      url: error.url || undefined,
+      body: error.body,
+    };
+  }
+  if (error instanceof Error) {
+    return { step: "desconhecido", message: error.message };
+  }
+  return { step: "desconhecido", message: String(error) };
+}
+
 function asRecord(value: unknown): UnknownRecord {
   return value && typeof value === "object" ? (value as UnknownRecord) : {};
 }
@@ -52,24 +98,37 @@ function errorMessage(body: UnknownRecord, fallback: string) {
   return typeof message === "string" && message.trim() ? message : fallback;
 }
 
-async function fetchJson(url: string, init?: RequestInit) {
-  const response = await fetch(url, {
-    ...init,
-    cache: "no-store",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
+async function fetchJson(url: string, step: string, init?: RequestInit) {
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+    });
+  } catch (error) {
+    throw new InscricaoApiError({
+      step,
+      url,
+      message:
+        error instanceof Error
+          ? `Falha de ligação à API (${step}): ${error.message}`
+          : `Falha de ligação à API (${step})`,
+    });
+  }
+
   const text = await response.text();
   let body: unknown = {};
   try {
     body = text ? JSON.parse(text) : {};
   } catch {
-    body = { message: text };
+    body = { raw: text.slice(0, 2000) };
   }
-  return { response, body: asRecord(body) };
+  return { response, body: asRecord(body), url };
 }
 
 export async function listInscritos(): Promise<SheetRow[]> {
@@ -78,11 +137,18 @@ export async function listInscritos(): Promise<SheetRow[]> {
   let lastPage = 1;
 
   do {
-    const { response, body } = await fetchJson(`${API_BASE}/listar?page=${page}`);
+    const { response, body, url } = await fetchJson(
+      `${API_BASE}/listar?page=${page}`,
+      "listar",
+    );
     if (!response.ok) {
-      throw new Error(
-        errorMessage(body, `Falha ao listar inscrições (HTTP ${response.status})`),
-      );
+      throw new InscricaoApiError({
+        step: "listar",
+        url,
+        status: response.status,
+        body,
+        message: errorMessage(body, `Falha ao listar inscrições (HTTP ${response.status})`),
+      });
     }
     const items = Array.isArray(body.inscritos)
       ? body.inscritos
@@ -111,7 +177,7 @@ export async function registerInscrito(input: {
     return { duplicate: true };
   }
 
-  const { response, body } = await fetchJson(`${API_BASE}/registar`, {
+  const { response, body, url } = await fetchJson(`${API_BASE}/registar`, "registar", {
     method: "POST",
     body: JSON.stringify({
       nome: input.name,
@@ -125,9 +191,13 @@ export async function registerInscrito(input: {
   }
 
   if (!response.ok) {
-    throw new Error(
-      errorMessage(body, `Falha ao registar inscrição (HTTP ${response.status})`),
-    );
+    throw new InscricaoApiError({
+      step: "registar",
+      url,
+      status: response.status,
+      body,
+      message: errorMessage(body, `Falha ao registar inscrição (HTTP ${response.status})`),
+    });
   }
 
   return {

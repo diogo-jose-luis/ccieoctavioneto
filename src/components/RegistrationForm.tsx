@@ -69,6 +69,7 @@ export default function RegistrationForm() {
         code?: string;
         message?: string;
         errors?: FieldErrors;
+        debug?: unknown;
       };
       if (response.status === 409 || data.code === "EMAIL_EXISTS") {
         setDuplicate(true);
@@ -83,11 +84,18 @@ export default function RegistrationForm() {
         return;
       }
       if (!response.ok || !data.ok) {
+        console.error("[inscrição] falha ao gravar", {
+          status: response.status,
+          message: data.message,
+          debug: data.debug ?? null,
+          errors: data.errors ?? null,
+        });
         if (data.errors) setErrors(data.errors);
         setFormError(data.message || "Não foi possível concluir a inscrição.");
         return;
       }
-    } catch {
+    } catch (error) {
+      console.error("[inscrição] falha de ligação", error);
       setFormError("Falha de ligação. Verifique a internet e tente novamente.");
     } finally {
       setSubmitting(false);
